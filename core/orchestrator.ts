@@ -20,7 +20,7 @@ export class Orchestrator {
       port,
       fetch(req, server) {
         if (server.upgrade(req)) {
-          return; // do not return a Response
+          return;
         }
 
         const url = new URL(req.url);
@@ -40,7 +40,6 @@ export class Orchestrator {
             const data = JSON.parse(message as string);
             if (data.type === "TRANSACTION_SYNC") {
               console.log(`[WebSocket] Syncing ${data.transactions.length} offline transactions...`);
-              // Archive offline transactions in memory engine
               ws.send(JSON.stringify({ type: "SYNC_SUCCESS", count: data.transactions.length }));
             }
           } catch(e) {
@@ -58,7 +57,6 @@ export class Orchestrator {
     const route = this.modelRouter.routeTask(taskDescription, complexityScore);
     console.log(`[Orchestrator] Task routed to ${route.tier}: ${route.targetModel} (Cost Estimate: ${route.costEstimateTokens} tokens)`);
 
-    // Memory fetch integration example
     const flash = this.memoryEngine.getMemoryFlash('general');
     if (flash.length > 0) {
       console.log(`[Orchestrator] Memory Flash: ${JSON.stringify(flash)}`);
@@ -66,7 +64,6 @@ export class Orchestrator {
 
     // Task execution logic would be here
 
-    // Post-execution archive
     this.memoryEngine.archiveSession({
       session_id: Date.now().toString(),
       domain: 'general',
@@ -74,10 +71,17 @@ export class Orchestrator {
       semantic_tags: 'task, executed'
     });
   }
+
+  public runSelfReflection() {
+      console.log("[Orchestrator] Initiating Self-Reflection Cycle.");
+      this.selfEditingEngine.analyzeAndRefactor('general');
+  }
 }
 
 // Example usage
 if (import.meta.main) {
   const orchestrator = new Orchestrator();
   orchestrator.startServer();
+  orchestrator.scheduleTask("Initial task", 1);
+  orchestrator.runSelfReflection();
 }
