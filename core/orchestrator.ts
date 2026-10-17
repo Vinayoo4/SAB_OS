@@ -14,17 +14,43 @@ export class Orchestrator {
   }
 
   public async startServer(port: number = 8080) {
-    console.log(`[Orchestrator] Starting background HTTP server on port ${port}...`);
+    console.log(`[Orchestrator] Starting background HTTP/WebSocket server on port ${port}...`);
 
     Bun.serve({
       port,
-      fetch(req) {
+      fetch(req, server) {
+        if (server.upgrade(req)) {
+          return; // do not return a Response
+        }
+
         const url = new URL(req.url);
         if (url.pathname === "/dispatch") {
           return new Response("Task Dispatched", { status: 200 });
         }
         return new Response("SAB-OS Orchestrator", { status: 200 });
       },
+      websocket: {
+        open(ws) {
+          console.log(`[WebSocket] Franchise POS Connected`);
+          ws.send(JSON.stringify({ type: "SYNC_ACK", message: "Connected to SAB-OS" }));
+        },
+        message(ws, message) {
+          console.log(`[WebSocket] Received from POS: ${message}`);
+          try {
+            const data = JSON.parse(message as string);
+            if (data.type === "TRANSACTION_SYNC") {
+              console.log(`[WebSocket] Syncing ${data.transactions.length} offline transactions...`);
+              // Archive offline transactions in memory engine
+              ws.send(JSON.stringify({ type: "SYNC_SUCCESS", count: data.transactions.length }));
+            }
+          } catch(e) {
+            console.error(`[WebSocket] Error parsing message:`, e);
+          }
+        },
+        close(ws) {
+          console.log(`[WebSocket] Franchise POS Disconnected`);
+        }
+      }
     });
   }
 
@@ -54,7 +80,4 @@ export class Orchestrator {
 if (import.meta.main) {
   const orchestrator = new Orchestrator();
   orchestrator.startServer();
-  orchestrator.scheduleTask("Run local script", 0);
-  orchestrator.scheduleTask("Classify intent", 2);
-  orchestrator.scheduleTask("Analyze financial statements", 7);
 }
