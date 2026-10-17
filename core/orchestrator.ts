@@ -5,10 +5,12 @@ import { SelfEditingEngine } from "./self_editing_engine";
 export class Orchestrator {
   private memoryEngine: EpistemicMemoryEngine;
   private selfEditingEngine: SelfEditingEngine;
+  private modelRouter: ModelRouter;
 
   constructor() {
     this.memoryEngine = new EpistemicMemoryEngine();
     this.selfEditingEngine = new SelfEditingEngine();
+    this.modelRouter = new ModelRouter();
   }
 
   public async startServer(port: number = 8080) {
@@ -27,8 +29,8 @@ export class Orchestrator {
   }
 
   public scheduleTask(taskDescription: string, complexityScore: number) {
-    const route = ModelRouter.routeTask(taskDescription, complexityScore);
-    console.log(`[Orchestrator] Task routed to ${route.tier}: ${route.targetModel}`);
+    const route = this.modelRouter.routeTask(taskDescription, complexityScore);
+    console.log(`[Orchestrator] Task routed to ${route.tier}: ${route.targetModel} (Cost Estimate: ${route.costEstimateTokens} tokens)`);
 
     // Memory fetch integration example
     const flash = this.memoryEngine.getMemoryFlash('general');
@@ -52,5 +54,7 @@ export class Orchestrator {
 if (import.meta.main) {
   const orchestrator = new Orchestrator();
   orchestrator.startServer();
+  orchestrator.scheduleTask("Run local script", 0);
+  orchestrator.scheduleTask("Classify intent", 2);
   orchestrator.scheduleTask("Analyze financial statements", 7);
 }
