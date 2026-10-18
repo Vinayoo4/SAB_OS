@@ -18,12 +18,30 @@ export class Orchestrator {
 
     Bun.serve({
       port,
-      fetch(req, server) {
+      async fetch(req, server) {
         if (server.upgrade(req)) {
           return;
         }
 
         const url = new URL(req.url);
+
+        if (req.method === "POST" && url.pathname === "/api/security/alert") {
+          try {
+            const body = await req.json();
+            console.log(`[Orchestrator] Received Security Alert: ${JSON.stringify(body)}`);
+
+            // Broadcast to all connected WebSocket clients (React UI)
+            server.publish("security", JSON.stringify({
+              type: "SECURITY_ALERT",
+              event: body
+            }));
+
+            return new Response(JSON.stringify({ success: true, message: "Alert broadcasted." }), { status: 200 });
+          } catch (e) {
+            return new Response(JSON.stringify({ error: "Invalid payload" }), { status: 400 });
+          }
+        }
+
         if (url.pathname === "/dispatch") {
           return new Response("Task Dispatched", { status: 200 });
         }
@@ -32,6 +50,7 @@ export class Orchestrator {
       websocket: {
         open(ws) {
           console.log(`[WebSocket] Franchise POS Connected`);
+          ws.subscribe("security"); // Subscribe to security topic
           ws.send(JSON.stringify({ type: "SYNC_ACK", message: "Connected to SAB-OS" }));
         },
         message(ws, message) {

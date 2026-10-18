@@ -4,10 +4,10 @@ import random
 
 def run_backtest(params):
     asset = params.get("asset", "UNKNOWN")
-    timeframes = params.get("timeframes", ["1m", "3m", "5m"])
+    timeframes = params.get("timeframes", ["1m", "3m", "5m", "15m"])
     capital = params.get("capital", 25000)
 
-    print(f"[Quant Sandbox] Initializing strategy for {asset} on {', '.join(timeframes)}")
+    print(f"[Quant Sandbox] Initializing vectorized matrix backtesting for {asset} on {', '.join(timeframes)}")
 
     # Paper-trading hard cap logic
     max_daily_drawdown_limit = 0.02 * capital # 2% daily drawdown
@@ -29,13 +29,14 @@ def run_backtest(params):
         },
         "execution_rules": {
             "stop_loss": True,
-            "take_profit": True
+            "take_profit": True,
+            "bracket_orders_attached": True
         }
     }
 
-    if simulated_drawdown > max_daily_drawdown_limit:
+    if simulated_drawdown >= max_daily_drawdown_limit:
         result["status"] = "HALTED"
-        result["message"] = "Daily drawdown limit exceeded. Trading halted."
+        result["message"] = "2% Daily Drawdown Hard Cap hit. Instantly halting all order placement and locking execution."
 
     return result
 
