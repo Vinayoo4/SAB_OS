@@ -22,7 +22,7 @@ pub fn get_hardware_profile() -> SystemProfile {
 
     // Determine execution mode based on RAM budget
     let mode = if total_memory_mb <= 2048 {
-        "Ultra-Lightweight Mode (<150MB)".to_string()
+        "ULTRA_LIGHT_MODE (<150MB Allocated)".to_string()
     } else {
         "GPU-Accelerated Mode".to_string() // Assume workstation
     };

@@ -7,7 +7,15 @@ describe("Omnichannel Taxation & Compliance Skills", () => {
 
     it("should calculate correct GST and TDS amounts", async () => {
         const skill = new GstReconcilerSkill();
-        const res = await skill.execute({ marketplace: "amazon", month: "Oct", year: 2024, total_sales: 100000 });
+        const res = await skill.execute({
+            marketplace: "amazon",
+            month: "Oct",
+            year: 2024,
+            total_sales: 100000,
+            annual_turnover_inr: 50_00_000,
+            business_type: "goods",
+            state_category: "regular"
+        });
         expect(res).toContain("Section 52 GST TCS (0.5%): ₹500.00");
         expect(res).toContain("Section 194O TDS (0.1%): ₹100.00");
         expect(res).toContain("Section 44AD Presumptive Profit (6%): ₹6000.00");

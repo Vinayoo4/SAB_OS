@@ -24,6 +24,17 @@ export class CscServicesSkill {
     if (chapter < 1 || chapter > 10) {
       return `[TEC Prep] Invalid chapter. Chapters range from 1 to 10.`;
     }
-    return `[TEC Prep] Generating study material and mock questions for Chapter ${chapter}...`;
+
+    let processDetails = `[TEC Prep] Generating study material and mock questions for Chapter ${chapter} of 10.`;
+
+    if (chapter === 10) {
+      processDetails += ` Final mock exam scheduled. Initiating ₹1,480 TEC certification fee payment workflow...`;
+    }
+
+    return processDetails;
+  }
+
+  public async prep_iibf_module(): Promise<string> {
+    return `[IIBF Prep] Initiating Banking Correspondent (BC) certificate onboarding and Digital Seva portal registration workflow...`;
   }
 }

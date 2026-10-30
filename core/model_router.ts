@@ -9,9 +9,13 @@ export interface RouteResult {
 
 export class ModelRouter {
   private openRouterApiKey: string | undefined;
+  private monidApiKey: string | undefined;
+  private monidBaseUrl: string | undefined;
 
   constructor() {
     this.openRouterApiKey = process.env.OPENROUTER_API_KEY;
+    this.monidApiKey = process.env.MONID_API_KEY;
+    this.monidBaseUrl = process.env.MONID_BASE_URL;
   }
 
   public routeTask(taskDescription: string, complexityScore: number): RouteResult {
@@ -27,9 +31,10 @@ export class ModelRouter {
 
     // Tier 1: Fast SLM (e.g. Gemini Flash, Claude Haiku, Local Llama 3)
     if (complexityScore <= 3) {
+      const targetModel = this.monidApiKey ? 'monid_fast' : (this.openRouterApiKey ? 'google/gemini-flash-1.5' : 'http://localhost:11434/llama3');
       return {
         tier: 'Tier1',
-        targetModel: this.openRouterApiKey ? 'google/gemini-flash-1.5' : 'local_llama_3',
+        targetModel,
         reasoning: 'Low complexity. Requires fast intent classification.',
         costEstimateTokens: 150
       };
@@ -37,11 +42,20 @@ export class ModelRouter {
 
     // Tier 2: Frontier LLM (e.g. Claude 3.5 Sonnet, GPT-4o)
     if (complexityScore <= 8) {
+      if (this.monidApiKey) {
+        return {
+          tier: 'Tier2',
+          targetModel: 'monid_frontier',
+          reasoning: 'High depth required for architecture/compliance design (Monid).',
+          costEstimateTokens: 2000
+        };
+      }
+
       if (!this.openRouterApiKey) {
          console.warn("[Router] No OPENROUTER_API_KEY found, falling back to local tier 1.");
          return {
            tier: 'Tier1',
-           targetModel: 'local_llama_3',
+           targetModel: 'http://localhost:11434/llama3',
            reasoning: 'Fallback to local due to missing API key.',
            costEstimateTokens: 500
          };
